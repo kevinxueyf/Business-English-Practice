@@ -7,7 +7,7 @@ import {
   SkipForward, 
   FastForward, 
   Globe2, 
-  Layers
+  Repeat
 } from 'lucide-react';
 import { ListeningLesson } from '../../types';
 import { speechService } from '../../services/speechService';
@@ -31,13 +31,11 @@ export const ListeningPlayer: React.FC<ListeningPlayerProps> = ({
   const [repeatMode, setRepeatMode] = useState<boolean>(false);
   const [accent, setAccent] = useState<string>(lesson.accent.includes('IN') ? 'IN' : lesson.accent.includes('UK') ? 'UK' : 'US');
 
-  // 当切换课程时同步语速与口音
   useEffect(() => {
     setSpeed(lesson.speed || 1.0);
     setAccent(lesson.accent.includes('IN') ? 'IN' : lesson.accent.includes('UK') ? 'UK' : 'US');
   }, [lesson]);
 
-  // 播放单句
   const playSentence = (index: number) => {
     if (index >= lesson.transcript.length) {
       setIsPlaying(false);
@@ -56,12 +54,10 @@ export const ListeningPlayer: React.FC<ListeningPlayerProps> = ({
       rate: speed,
       onEnd: () => {
         if (repeatMode) {
-          // 单句重复
           setTimeout(() => {
             if (isPlaying) playSentence(index);
           }, 600);
         } else if (index + 1 < lesson.transcript.length) {
-          // 连续播放下一句
           setTimeout(() => {
             playSentence(index + 1);
           }, 450);
@@ -107,77 +103,84 @@ export const ListeningPlayer: React.FC<ListeningPlayerProps> = ({
   };
 
   return (
-    <div className="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-4 sm:p-5 shadow-xl">
+    <div className="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-3.5 sm:p-5 shadow-xl">
       {/* Lesson Header Information */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-700/60 gap-3">
-        <div>
-          <div className="flex items-center space-x-2">
-            <span className="text-xs font-bold px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/30">
+      <div className="flex items-start justify-between pb-3 sm:pb-4 border-b border-slate-700/60 gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5 mb-1">
+            <span className="text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/30 shrink-0">
               {lesson.level}
             </span>
-            <span className="text-xs font-medium text-slate-400 bg-slate-700/40 px-2 py-0.5 rounded">
+            <span className="text-[10px] sm:text-xs font-medium text-slate-400 bg-slate-700/40 px-1.5 py-0.5 rounded truncate max-w-[140px] sm:max-w-none">
               {lesson.industry}
             </span>
-            <span className="text-xs text-slate-400 flex items-center space-x-1">
-              <Globe2 className="w-3.5 h-3.5 text-indigo-400" />
-              <span>{lesson.accent}</span>
+            <span className="text-[10px] sm:text-xs text-indigo-300 flex items-center space-x-1 shrink-0">
+              <Globe2 className="w-3 h-3" />
+              <span>{lesson.accent.split('(')[0].trim()}</span>
             </span>
           </div>
-          <h2 className="text-lg sm:text-xl font-extrabold text-white mt-1.5">
+
+          <h2 className="text-base sm:text-xl font-extrabold text-white truncate">
             {lesson.title}
           </h2>
-          <p className="text-xs text-slate-400 mt-1 line-clamp-1">
+          <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 line-clamp-1 sm:line-clamp-2">
             {lesson.scenario}
           </p>
         </div>
 
-        {/* Audio Waveform Animation Indicator */}
-        <div className="flex items-center space-x-1 h-8 px-3 py-1 bg-slate-900/60 rounded-xl border border-slate-700/40 shrink-0">
-          {[40, 75, 95, 60, 85, 45, 90, 65, 35].map((h, i) => (
+        {/* Dynamic Waveform Visualizer */}
+        <div className="flex items-center space-x-1 h-7 sm:h-8 px-2 sm:px-3 bg-slate-900/80 rounded-xl border border-slate-700/50 shrink-0">
+          {[40, 80, 100, 60, 90, 50].map((h, i) => (
             <div
               key={i}
-              className={`w-1 rounded-full transition-all duration-300 ${
+              className={`w-1 rounded-full transition-all duration-200 ${
                 isPlaying
                   ? 'bg-gradient-to-t from-sky-500 to-indigo-400 animate-pulse'
                   : 'bg-slate-700'
               }`}
               style={{
-                height: isPlaying ? `${Math.max(8, (h * (i % 2 === 0 ? 1 : 0.7)))}%` : '20%',
-                animationDelay: `${i * 120}ms`
+                height: isPlaying ? `${Math.max(6, h)}%` : '20%',
+                animationDelay: `${i * 100}ms`
               }}
             />
           ))}
-          <span className="text-[11px] font-mono text-slate-400 ml-2">
+          <span className="text-[10px] sm:text-[11px] font-mono text-slate-400 ml-1.5">
             {currentSentenceIndex + 1}/{lesson.transcript.length}
           </span>
         </div>
       </div>
 
-      {/* Main Playback Bar */}
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        {/* Playback Controls */}
-        <div className="flex items-center space-x-2">
-          {/* Main Play/Pause Button */}
+      {/* Main Playback Bar (Mobile & Desktop Responsive) */}
+      <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+        {/* Playback Controls Cluster */}
+        <div className="flex items-center justify-between w-full sm:w-auto space-x-2">
+          {/* Main Play/Pause Button (Large Touch Target) */}
           <button
             onClick={handlePlayPause}
-            className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-white transition-all shadow-lg ${
+            className={`flex-1 sm:flex-none h-11 sm:h-12 px-5 sm:px-6 rounded-xl flex items-center justify-center font-bold text-white transition-all shadow-lg text-sm ${
               isPlaying
-                ? 'bg-amber-500 hover:bg-amber-400 shadow-amber-500/20'
+                ? 'bg-amber-500 hover:bg-amber-400 shadow-amber-500/25'
                 : 'bg-sky-500 hover:bg-sky-400 shadow-sky-500/25'
             }`}
             title={isPlaying ? '暂停' : '播放全文'}
           >
             {isPlaying ? (
-              <Pause className="w-5 h-5 fill-current" />
+              <>
+                <Pause className="w-4 h-4 fill-current mr-1.5" />
+                <span>暂停</span>
+              </>
             ) : (
-              <Play className="w-5 h-5 fill-current ml-0.5" />
+              <>
+                <Play className="w-4 h-4 fill-current ml-0.5 mr-1.5" />
+                <span>{currentSentenceIndex === 0 ? '全篇精听' : '继续播放'}</span>
+              </>
             )}
           </button>
 
           {/* Replay Current Sentence */}
           <button
             onClick={handleReplayCurrent}
-            className="p-2.5 rounded-xl bg-slate-700/60 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-600/40 transition"
+            className="w-11 h-11 rounded-xl bg-slate-700/60 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-600/40 flex items-center justify-center transition shrink-0"
             title="单句重新发音"
           >
             <RotateCcw className="w-4 h-4" />
@@ -186,7 +189,7 @@ export const ListeningPlayer: React.FC<ListeningPlayerProps> = ({
           {/* Next Sentence */}
           <button
             onClick={handleNext}
-            className="p-2.5 rounded-xl bg-slate-700/60 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-600/40 transition"
+            className="w-11 h-11 rounded-xl bg-slate-700/60 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-600/40 flex items-center justify-center transition shrink-0"
             title="跳至下一句"
           >
             <SkipForward className="w-4 h-4" />
@@ -195,23 +198,24 @@ export const ListeningPlayer: React.FC<ListeningPlayerProps> = ({
           {/* Repeat Current Sentence Toggle */}
           <button
             onClick={() => setRepeatMode(!repeatMode)}
-            className={`px-3 py-2 rounded-xl text-xs font-bold border transition ${
+            className={`h-11 px-3 rounded-xl text-xs font-bold border transition flex items-center space-x-1 shrink-0 ${
               repeatMode
                 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/50'
-                : 'bg-slate-700/40 text-slate-400 border-slate-700 hover:text-white'
+                : 'bg-slate-700/40 text-slate-400 border-slate-700'
             }`}
             title="单句循环练习"
           >
-            单句循环
+            <Repeat className="w-3.5 h-3.5" />
+            <span className="hidden xs:inline">循环</span>
           </button>
         </div>
 
         {/* Speed & Accent Switchers */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center justify-between w-full sm:w-auto space-x-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-700/40">
           {/* Speed Toggle */}
           <button
             onClick={toggleSpeed}
-            className="flex items-center space-x-1 px-3 py-2 rounded-xl bg-slate-700/60 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-600/50 transition"
+            className="flex-1 sm:flex-none flex items-center justify-center space-x-1 h-9 px-3 rounded-xl bg-slate-700/60 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-600/50 transition"
             title="切换播放语速"
           >
             <FastForward className="w-3.5 h-3.5 text-sky-400" />
@@ -219,7 +223,7 @@ export const ListeningPlayer: React.FC<ListeningPlayerProps> = ({
           </button>
 
           {/* Accent Quick Switch */}
-          <div className="flex items-center space-x-1 bg-slate-900/60 p-1 rounded-xl border border-slate-700/40">
+          <div className="flex items-center space-x-1 bg-slate-900/60 p-0.5 rounded-xl border border-slate-700/40">
             {(['US', 'UK', 'IN'] as const).map((acc) => (
               <button
                 key={acc}
@@ -230,7 +234,7 @@ export const ListeningPlayer: React.FC<ListeningPlayerProps> = ({
                     playSentence(currentSentenceIndex);
                   }
                 }}
-                className={`px-2 py-1 rounded-lg text-xs font-semibold transition ${
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
                   accent === acc
                     ? 'bg-sky-500 text-white shadow'
                     : 'text-slate-400 hover:text-white'

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   ProficiencyLevel, 
   ListeningLesson, 
@@ -27,10 +27,9 @@ import {
   BookOpen, 
   Volume2, 
   Mic2, 
-  ArrowRight, 
-  CheckCircle2, 
-  Award,
-  Layers
+  FileText,
+  HelpCircle,
+  Award
 } from 'lucide-react';
 import { speechService } from './services/speechService';
 
@@ -41,6 +40,9 @@ export const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isCorpusOpen, setIsCorpusOpen] = useState<boolean>(false);
   const [isDynamicModalOpen, setIsDynamicModalOpen] = useState<boolean>(false);
+
+  // Mobile Listening sub-tab state (transcript vs questions)
+  const [mobileListeningView, setMobileListeningView] = useState<'transcript' | 'questions'>('transcript');
 
   // App Data states
   const [stats, setStats] = useState<UserStats>(storageService.getUserStats());
@@ -61,7 +63,6 @@ export const App: React.FC = () => {
   // Evaluation states
   const [latestEvaluation, setLatestEvaluation] = useState<SpeechEvaluationResult | null>(null);
 
-  // 当切换等级时，自动同步对应等级的课程与实战场景
   const handleLevelChange = (lvl: ProficiencyLevel) => {
     setCurrentLevel(lvl);
     const matchedLesson = lessons.find(l => l.level === lvl) || lessons[0];
@@ -90,7 +91,6 @@ export const App: React.FC = () => {
   };
 
   const handleStartSpecificPractice = (weakness: UserWeaknessRecord) => {
-    // 切换到与该弱点相配的等级和场景
     handleLevelChange(weakness.level);
     setActiveTab('roleplay');
   };
@@ -100,8 +100,8 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      {/* Top Navigation */}
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans pb-20 md:pb-6">
+      {/* Top Navigation Bar & Mobile Bottom Tab */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -112,7 +112,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 space-y-4 sm:space-y-6">
         {/* Step 1: 进阶路线选择器 (L1 -> L4) */}
         <LevelSelector
           currentLevel={currentLevel}
@@ -123,12 +123,12 @@ export const App: React.FC = () => {
             MODULE 1: AI 驱动的动态听力模块 (Listening Comprehension)
             ========================================================================= */}
         {activeTab === 'listening' && (
-          <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-200">
             {/* Top Lesson Selector & Generator Action */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-900/80 p-3.5 rounded-2xl border border-slate-800 gap-3">
-              <div className="flex items-center space-x-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-                <span className="text-xs font-bold text-slate-400 shrink-0">
-                  {currentLevel} 实战剧本:
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-900/80 p-2.5 sm:p-3.5 rounded-2xl border border-slate-800 gap-2.5">
+              <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+                <span className="text-[11px] sm:text-xs font-bold text-slate-400 shrink-0">
+                  {currentLevel} 剧本:
                 </span>
                 {lessons
                   .filter(l => l.level === currentLevel)
@@ -142,7 +142,7 @@ export const App: React.FC = () => {
                         setIsListeningPlaying(false);
                         speechService.stop();
                       }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition ${
+                      className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition ${
                         currentLesson.id === lesson.id
                           ? 'bg-sky-500 text-white shadow-md shadow-sky-500/20'
                           : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
@@ -156,15 +156,15 @@ export const App: React.FC = () => {
               {/* Dynamic AI Generator Button */}
               <button
                 onClick={() => setIsDynamicModalOpen(true)}
-                className="flex items-center justify-center space-x-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-sky-500/20 shrink-0 transition"
+                className="flex items-center justify-center space-x-1 px-3 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-sky-500/20 shrink-0 transition"
                 title="根据您的行业和要求，调用 Gemini 动态生成全新听力剧本"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>AI 动态生成新行业剧本</span>
+                <span>AI 生成新听力剧本</span>
               </button>
             </div>
 
-            {/* Listening Audio Player with Multi-accent & Waveform */}
+            {/* Listening Audio Player */}
             <ListeningPlayer
               lesson={currentLesson}
               currentSentenceIndex={currentSentenceIndex}
@@ -173,22 +173,22 @@ export const App: React.FC = () => {
               setIsPlaying={setIsListeningPlaying}
             />
 
-            {/* Key Vocabulary Quick Bar */}
+            {/* Key Vocabulary Quick Bar (Scrollable on mobile) */}
             {currentLesson.keyVocabulary && currentLesson.keyVocabulary.length > 0 && (
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
-                <div className="flex items-center space-x-2 mb-2 text-xs font-bold text-sky-400">
+              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-3 sm:p-4">
+                <div className="flex items-center space-x-1.5 mb-2 text-xs font-bold text-sky-400">
                   <BookOpen className="w-3.5 h-3.5" />
-                  <span>本课核心职场高频术语 (点击可单字发音)：</span>
+                  <span>核心业务词汇 (点选朗读)：</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="flex lg:grid lg:grid-cols-4 gap-2 overflow-x-auto pb-1 scrollbar-none">
                   {currentLesson.keyVocabulary.map((vocab, i) => (
                     <div
                       key={i}
                       onClick={() => handleWordSpeak(vocab.word)}
-                      className="p-2.5 rounded-xl bg-slate-850/80 border border-slate-800 hover:border-sky-500/50 cursor-pointer transition flex items-start justify-between group"
+                      className="p-2 sm:p-2.5 rounded-xl bg-slate-850/80 border border-slate-800 hover:border-sky-500/50 cursor-pointer transition flex items-start justify-between group shrink-0 min-w-[170px] sm:min-w-0"
                     >
                       <div>
-                        <div className="flex items-center space-x-1.5">
+                        <div className="flex items-center space-x-1">
                           <span className="text-xs font-bold text-white group-hover:text-sky-300">
                             {vocab.word}
                           </span>
@@ -196,21 +196,47 @@ export const App: React.FC = () => {
                             {vocab.phonetic}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-300 mt-0.5">
+                        <p className="text-[11px] text-slate-300 mt-0.5 line-clamp-1">
                           {vocab.definition}
                         </p>
                       </div>
-                      <Volume2 className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 shrink-0 mt-0.5" />
+                      <Volume2 className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 shrink-0 ml-1 mt-0.5" />
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Two Column Layout: Left = Interactive Transcript; Right = 3-Dimension Questions */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              {/* Left Column (7 cols): Bilingual Interactive Transcript */}
-              <div className="lg:col-span-7">
+            {/* Mobile View Toggle Switcher (< lg screen) */}
+            <div className="lg:hidden flex rounded-xl bg-slate-900 p-1 border border-slate-800">
+              <button
+                onClick={() => setMobileListeningView('transcript')}
+                className={`flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-lg text-xs font-bold transition ${
+                  mobileListeningView === 'transcript'
+                    ? 'bg-sky-500 text-white shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>双语逐句精听</span>
+              </button>
+              <button
+                onClick={() => setMobileListeningView('questions')}
+                className={`flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-lg text-xs font-bold transition ${
+                  mobileListeningView === 'questions'
+                    ? 'bg-sky-500 text-white shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>三维理解测试 ({currentLesson.questions.length})</span>
+              </button>
+            </div>
+
+            {/* Two Column Layout on Desktop; Tab Switcher on Mobile */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
+              {/* Left Column: Bilingual Interactive Transcript */}
+              <div className={`lg:col-span-7 ${mobileListeningView !== 'transcript' ? 'hidden lg:block' : ''}`}>
                 <TranscriptViewer
                   transcript={currentLesson.transcript}
                   currentIndex={currentSentenceIndex}
@@ -219,12 +245,17 @@ export const App: React.FC = () => {
                 />
               </div>
 
-              {/* Right Column (5 cols): AI Multi-dimensional Question Cards */}
-              <div className="lg:col-span-5">
+              {/* Right Column: AI Multi-dimensional Question Cards */}
+              <div className={`lg:col-span-5 ${mobileListeningView !== 'questions' ? 'hidden lg:block' : ''}`}>
                 <QuestionCard
                   questions={currentLesson.questions}
                   transcript={currentLesson.transcript}
-                  onHighlightClue={(idx) => setClueSentenceIndex(idx)}
+                  onHighlightClue={(idx) => {
+                    setClueSentenceIndex(idx);
+                  }}
+                  onViewClueInTranscript={() => {
+                    setMobileListeningView('transcript');
+                  }}
                 />
               </div>
             </div>
@@ -235,12 +266,12 @@ export const App: React.FC = () => {
             MODULE 2: 动态场景模拟引擎 (AI Roleplay)
             ========================================================================= */}
         {activeTab === 'roleplay' && (
-          <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-200">
             {/* Scenario Quick Selector Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-900/80 p-3.5 rounded-2xl border border-slate-800 gap-3">
-              <div className="flex items-center space-x-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-                <span className="text-xs font-bold text-slate-400 shrink-0">
-                  {currentLevel} 会议模拟实战:
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-900/80 p-2.5 sm:p-3.5 rounded-2xl border border-slate-800 gap-2">
+              <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+                <span className="text-[11px] sm:text-xs font-bold text-slate-400 shrink-0">
+                  {currentLevel} 会议模拟:
                 </span>
                 {ROLEPLAY_SCENARIOS
                   .filter(s => s.level === currentLevel)
@@ -248,7 +279,7 @@ export const App: React.FC = () => {
                     <button
                       key={s.id}
                       onClick={() => setCurrentScenario(s)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition ${
+                      className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition ${
                         currentScenario.id === s.id
                           ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
                           : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
@@ -259,9 +290,9 @@ export const App: React.FC = () => {
                   ))}
               </div>
 
-              <div className="text-xs text-indigo-400 font-semibold flex items-center space-x-1.5 shrink-0">
-                <Mic2 className="w-4 h-4" />
-                <span>支持语音输入、静音自动切话与中途打断</span>
+              <div className="text-[11px] sm:text-xs text-indigo-400 font-semibold flex items-center space-x-1 shrink-0">
+                <Mic2 className="w-3.5 h-3.5" />
+                <span>支持静音自动发言与随时打断</span>
               </div>
             </div>
 
@@ -277,13 +308,10 @@ export const App: React.FC = () => {
             MODULE 3: 四维实时评分与反馈系统 (Evaluation Module)
             ========================================================================= */}
         {activeTab === 'evaluation' && (
-          <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-200">
             {latestEvaluation ? (
               <>
-                {/* 4 Dimension Score Visualizer */}
                 <ScoreRadar scores={latestEvaluation.scores} />
-
-                {/* Detailed Diagnostic with Chinglish Correction & 3-Tier Paraphrasing */}
                 <DiagnosticFeedback
                   evaluation={latestEvaluation}
                   level={currentLevel}
@@ -291,11 +319,10 @@ export const App: React.FC = () => {
                 />
               </>
             ) : (
-              /* If user has not completed a meeting yet, show comprehensive demo diagnostic */
-              <div className="space-y-6">
-                <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 text-center">
-                  <Award className="w-10 h-10 text-teal-400 mx-auto mb-2" />
-                  <h3 className="text-base font-bold text-white">
+              <div className="space-y-4 sm:space-y-6">
+                <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 sm:p-6 text-center">
+                  <Award className="w-8 h-8 sm:w-10 sm:h-10 text-teal-400 mx-auto mb-2" />
+                  <h3 className="text-sm sm:text-base font-bold text-white">
                     四维实时诊断实验室 (示例预览)
                   </h3>
                   <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
@@ -303,13 +330,12 @@ export const App: React.FC = () => {
                   </p>
                   <button
                     onClick={() => setActiveTab('roleplay')}
-                    className="mt-4 px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition shadow-md shadow-teal-600/20"
+                    className="mt-3.5 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition shadow-md shadow-teal-600/20"
                   >
-                    立即开启一场 1v1 会议实战
+                    立即开启 1v1 会议实战
                   </button>
                 </div>
 
-                {/* Default showcase scores */}
                 <ScoreRadar
                   scores={{
                     pronunciation: 88,
@@ -373,7 +399,7 @@ export const App: React.FC = () => {
             MODULE 4: “教练式”复盘与个人知识图谱 (Knowledge Graph)
             ========================================================================= */}
         {activeTab === 'knowledge' && (
-          <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-200">
             <WeaknessTracker
               stats={stats}
               onRefreshStats={() => setStats(storageService.getUserStats())}
@@ -383,14 +409,14 @@ export const App: React.FC = () => {
         )}
       </main>
 
-      {/* Footer Branding */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-6 mt-12 text-center text-xs text-slate-500">
+      {/* Footer (Hidden on mobile to save space, visible on tablet/desktop) */}
+      <footer className="hidden md:block border-t border-slate-900 bg-slate-950 py-5 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div>
             <span className="font-bold text-slate-400">BizPulse AI</span> · 进阶式商务英语口语与听力实战闭环
           </div>
           <div>
-            基于 React 19 + TypeScript + Vite + Google Gemini 多模态 API 构建
+            React 19 + TypeScript + Vite + Google Gemini 多模态 API
           </div>
         </div>
       </footer>
@@ -399,17 +425,13 @@ export const App: React.FC = () => {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        onSaved={() => {
-          setHasApiKey(Boolean(storageService.getApiKey()));
-        }}
+        onSaved={() => setHasApiKey(Boolean(storageService.getApiKey()))}
       />
 
       <CorpusUploadModal
         isOpen={isCorpusOpen}
         onClose={() => setIsCorpusOpen(false)}
-        onSaved={() => {
-          // updated corpus
-        }}
+        onSaved={() => {}}
       />
 
       <DynamicGeneratorModal
