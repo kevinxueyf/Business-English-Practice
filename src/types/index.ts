@@ -149,4 +149,59 @@ export interface UserStats {
   totalSpeakingMinutes: number;
   totalListeningMinutes: number;
   weaknesses: UserWeaknessRecord[];
+  dailyWorkoutMinutes?: number; // 今日训练分钟数
+  dailyGoalMinutes?: number;    // 每日目标（如15分钟）
+}
+
+export interface BusinessPhrase {
+  id: string;
+  category: string;
+  categoryName: string;
+  en: string;
+  zh: string;
+  phoneticTip?: string;
+  businessContext: string;
+  accent: 'US' | 'UK' | 'IN';
+  difficulty: 'L1' | 'L2' | 'L3' | 'L4';
+  isFavorite?: boolean;
+}
+
+export interface TedTalkSentence {
+  id: string;
+  speaker: string;
+  en: string;
+  zh: string;
+  startSec: number;
+  endSec: number;
+  clue?: string;
+}
+
+export interface TedTalkLesson {
+  id: string;
+  title: string;
+  speaker: string;
+  speakerRole: string;
+  category: string;
+  coverImage: string;
+  videoUrl?: string; // YouTube / MP4 embed url
+  durationMinutes: number;
+  recommendedDate: string;
+  overview: string;
+  executiveInsights: string;
+  transcript: TedTalkSentence[];
+  keyQuotes: string[];
+}
+
+export interface ShadowingEvaluation {
+  userTranscript: string;
+  referenceText: string;
+  overallScore: number;
+  fluencyScore: number;
+  pronunciationScore: number;
+  wordFeedback: {
+    word: string;
+    isMatch: boolean;
+    status: 'good' | 'warning' | 'missed';
+  }[];
+  coachTip: string;
 }

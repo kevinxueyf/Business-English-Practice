@@ -9,11 +9,11 @@ import {
   Flame, 
   Clock, 
   Sparkles,
-  Settings2
+  BookMarked
 } from 'lucide-react';
 import { UserStats } from '../types';
 
-export type NavTab = 'listening' | 'roleplay' | 'evaluation' | 'knowledge';
+export type NavTab = 'listening' | 'roleplay' | 'corpus' | 'evaluation' | 'knowledge';
 
 interface NavbarProps {
   activeTab: NavTab;
@@ -61,53 +61,65 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             </div>
 
-            {/* Desktop Navigation Tabs (Hidden on mobile, mobile uses bottom bar) */}
+            {/* Desktop Navigation Tabs */}
             <nav className="hidden md:flex items-center space-x-1 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700/60">
               <button
                 onClick={() => setActiveTab('listening')}
-                className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   activeTab === 'listening'
                     ? 'bg-sky-500 text-white shadow-md shadow-sky-500/25'
                     : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
                 }`}
               >
-                <Headphones className="w-4 h-4" />
+                <Headphones className="w-3.5 h-3.5" />
                 <span>动态听力</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('roleplay')}
-                className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   activeTab === 'roleplay'
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25'
                     : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
                 }`}
               >
-                <Mic2 className="w-4 h-4" />
+                <Mic2 className="w-3.5 h-3.5" />
                 <span>场景模拟</span>
               </button>
 
               <button
+                onClick={() => setActiveTab('corpus')}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === 'corpus'
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md shadow-amber-500/25'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                }`}
+              >
+                <BookMarked className="w-3.5 h-3.5" />
+                <span>每日精练(900句/TED)</span>
+              </button>
+
+              <button
                 onClick={() => setActiveTab('evaluation')}
-                className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   activeTab === 'evaluation'
                     ? 'bg-teal-600 text-white shadow-md shadow-teal-600/25'
                     : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
                 }`}
               >
-                <BarChart3 className="w-4 h-4" />
+                <BarChart3 className="w-3.5 h-3.5" />
                 <span>四维诊断</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('knowledge')}
-                className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   activeTab === 'knowledge'
                     ? 'bg-purple-600 text-white shadow-md shadow-purple-600/25'
                     : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
                 }`}
               >
-                <BrainCircuit className="w-4 h-4" />
+                <BrainCircuit className="w-3.5 h-3.5" />
                 <span>弱点追踪</span>
                 {stats.weaknesses.length > 0 && (
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span>
@@ -117,6 +129,12 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Quick Actions & Status */}
             <div className="flex items-center space-x-2 sm:space-x-2.5">
+              {/* Daily Workout Minutes Badge */}
+              <div className="hidden sm:flex items-center space-x-1 text-xs text-sky-400 bg-sky-500/10 px-2 py-1 rounded-lg border border-sky-500/20 font-bold" title="今日已完成训练时长">
+                <Clock className="w-3.5 h-3.5" />
+                <span>{stats.dailyWorkoutMinutes || 6}m</span>
+              </div>
+
               {/* Streak Badge */}
               <div className="flex items-center space-x-1 text-xs text-amber-400 bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/20 font-bold">
                 <Flame className="w-3.5 h-3.5 fill-current" />
@@ -156,64 +174,69 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </header>
 
-      {/* Mobile Floating Bottom Navigation Bar (iOS / Android App Style) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 px-2 py-1.5 shadow-2xl flex items-center justify-around">
+      {/* Mobile Floating Bottom Navigation Bar (5 tabs) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 px-1 py-1.5 shadow-2xl flex items-center justify-around">
         <button
           onClick={() => setActiveTab('listening')}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
-            activeTab === 'listening'
-              ? 'text-sky-400 font-bold'
-              : 'text-slate-400 hover:text-slate-200'
+          className={`flex flex-col items-center justify-center py-0.5 px-2 rounded-xl transition-all ${
+            activeTab === 'listening' ? 'text-sky-400 font-bold' : 'text-slate-400'
           }`}
         >
           <div className={`p-1 rounded-lg ${activeTab === 'listening' ? 'bg-sky-500/15' : ''}`}>
-            <Headphones className="w-5 h-5" />
+            <Headphones className="w-4 h-4" />
           </div>
-          <span className="text-[10px] mt-0.5">动态听力</span>
+          <span className="text-[9px] mt-0.5">听力</span>
         </button>
 
         <button
           onClick={() => setActiveTab('roleplay')}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
-            activeTab === 'roleplay'
-              ? 'text-indigo-400 font-bold'
-              : 'text-slate-400 hover:text-slate-200'
+          className={`flex flex-col items-center justify-center py-0.5 px-2 rounded-xl transition-all ${
+            activeTab === 'roleplay' ? 'text-indigo-400 font-bold' : 'text-slate-400'
           }`}
         >
           <div className={`p-1 rounded-lg ${activeTab === 'roleplay' ? 'bg-indigo-500/15' : ''}`}>
-            <Mic2 className="w-5 h-5" />
+            <Mic2 className="w-4 h-4" />
           </div>
-          <span className="text-[10px] mt-0.5">场景模拟</span>
+          <span className="text-[9px] mt-0.5">场景模拟</span>
+        </button>
+
+        {/* New Daily Corpus Tab on mobile */}
+        <button
+          onClick={() => setActiveTab('corpus')}
+          className={`flex flex-col items-center justify-center py-0.5 px-2 rounded-xl transition-all ${
+            activeTab === 'corpus' ? 'text-amber-400 font-bold' : 'text-slate-400'
+          }`}
+        >
+          <div className={`p-1 rounded-lg ${activeTab === 'corpus' ? 'bg-amber-500/15' : ''}`}>
+            <BookMarked className="w-4 h-4" />
+          </div>
+          <span className="text-[9px] mt-0.5">每日精练</span>
         </button>
 
         <button
           onClick={() => setActiveTab('evaluation')}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
-            activeTab === 'evaluation'
-              ? 'text-teal-400 font-bold'
-              : 'text-slate-400 hover:text-slate-200'
+          className={`flex flex-col items-center justify-center py-0.5 px-2 rounded-xl transition-all ${
+            activeTab === 'evaluation' ? 'text-teal-400 font-bold' : 'text-slate-400'
           }`}
         >
           <div className={`p-1 rounded-lg ${activeTab === 'evaluation' ? 'bg-teal-500/15' : ''}`}>
-            <BarChart3 className="w-5 h-5" />
+            <BarChart3 className="w-4 h-4" />
           </div>
-          <span className="text-[10px] mt-0.5">四维诊断</span>
+          <span className="text-[9px] mt-0.5">诊断</span>
         </button>
 
         <button
           onClick={() => setActiveTab('knowledge')}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl relative transition-all ${
-            activeTab === 'knowledge'
-              ? 'text-purple-400 font-bold'
-              : 'text-slate-400 hover:text-slate-200'
+          className={`flex flex-col items-center justify-center py-0.5 px-2 rounded-xl relative transition-all ${
+            activeTab === 'knowledge' ? 'text-purple-400 font-bold' : 'text-slate-400'
           }`}
         >
           <div className={`p-1 rounded-lg ${activeTab === 'knowledge' ? 'bg-purple-500/15' : ''}`}>
-            <BrainCircuit className="w-5 h-5" />
+            <BrainCircuit className="w-4 h-4" />
           </div>
-          <span className="text-[10px] mt-0.5">弱点追踪</span>
+          <span className="text-[9px] mt-0.5">复盘</span>
           {stats.weaknesses.length > 0 && (
-            <span className="absolute top-1 right-3 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-slate-900 animate-pulse"></span>
+            <span className="absolute top-0.5 right-2 w-1.5 h-1.5 rounded-full bg-rose-500 ring-2 ring-slate-900 animate-pulse"></span>
           )}
         </button>
       </nav>

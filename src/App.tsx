@@ -20,6 +20,7 @@ import { MeetingRoom } from './components/RoleplayModule/MeetingRoom';
 import { ScoreRadar } from './components/EvaluationModule/ScoreRadar';
 import { DiagnosticFeedback } from './components/EvaluationModule/DiagnosticFeedback';
 import { WeaknessTracker } from './components/KnowledgeGraph/WeaknessTracker';
+import { DailyCorpusHub } from './components/DailyCorpusModule/DailyCorpusHub';
 import { SettingsModal } from './components/SettingsModal';
 import { CorpusUploadModal } from './components/CorpusUploadModal';
 import { 
@@ -302,6 +303,15 @@ export const App: React.FC = () => {
               onFinishMeeting={handleFinishMeeting}
             />
           </div>
+        )}
+
+        {/* =========================================================================
+            MODULE 3: 每日精练语料库 (商务英语 900 句 + Gemini 每日 TED 演讲)
+            ========================================================================= */}
+        {activeTab === 'corpus' && (
+          <DailyCorpusHub
+            onMinutesUpdated={() => setStats(storageService.getUserStats())}
+          />
         )}
 
         {/* =========================================================================

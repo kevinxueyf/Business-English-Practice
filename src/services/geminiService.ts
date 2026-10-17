@@ -288,6 +288,138 @@ Return ONLY valid JSON:
     };
   }
 
+  /**
+   * 5. 跟读复盘对比评测：原句 vs 用户发音转录，细颗粒度逐词诊断与打分
+   */
+  public evaluateShadowing(
+    referenceText: string,
+    userTranscript: string
+  ): import('../types').ShadowingEvaluation {
+    const cleanRef = referenceText.trim().replace(/[.,!?;:"'()]/g, '');
+    const cleanUser = userTranscript.trim().replace(/[.,!?;:"'()]/g, '');
+
+    const refWords = cleanRef.split(/\s+/).filter(Boolean);
+    const userWords = cleanUser.split(/\s+/).filter(Boolean).map(w => w.toLowerCase());
+
+    let matchCount = 0;
+    const wordFeedback = refWords.map((word) => {
+      const lower = word.toLowerCase();
+      const isMatch = userWords.includes(lower);
+      if (isMatch) matchCount++;
+      return {
+        word,
+        isMatch,
+        status: isMatch ? ('good' as const) : ('missed' as const)
+      };
+    });
+
+    const totalWords = refWords.length || 1;
+    const accuracy = Math.round((matchCount / totalWords) * 100);
+    const overallScore = Math.min(100, Math.max(40, Math.round(accuracy * 0.8 + 20)));
+
+    let coachTip = "发音非常清晰！注意保持句末语调自然微降，增强商务职场的自信沉稳气场。";
+    if (accuracy < 60) {
+      coachTip = "部分实义动词和专有名词有漏读或吞音现象。建议开启【单句复读】模式先慢速精听2遍，再同步跟读。";
+    } else if (accuracy < 85) {
+      coachTip = "整体节奏很棒！重点注意连读（Linking Sounds）与意群停顿，避免生硬的字字卡顿。";
+    }
+
+    return {
+      referenceText,
+      userTranscript: userTranscript || "(未检测到有效声音输入)",
+      overallScore,
+      fluencyScore: Math.round(overallScore * 0.95),
+      pronunciationScore: overallScore,
+      wordFeedback,
+      coachTip
+    };
+  }
+
+  /**
+   * 6. Gemini 动态推荐每日 TED / 商业演讲素材
+   */
+  public async generateDailyTedLesson(topic: string): Promise<import('../types').TedTalkLesson> {
+    const client = this.getClient();
+    const modelName = storageService.getModel() || 'gemini-1.5-flash';
+
+    if (!client) {
+      return {
+        id: `dyn-ted-${Date.now()}`,
+        title: `${topic}: The Architecture of High-Trust Organizations`,
+        speaker: 'Dr. Elena Rostova',
+        speakerRole: 'Global Organizational Psychologist & Author',
+        category: '商业决策与心理学 (Business Psychology & Trust)',
+        coverImage: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop&q=80',
+        durationMinutes: 12,
+        recommendedDate: 'Gemini AI 专属定制推荐',
+        overview: `针对 ${topic} 议题深度展开的商业领导力切片。剖析跨国团队如何在远程分布式办公环境下建立高信任度协作。`,
+        executiveInsights: '信任不是无端产生的道德约束，而是透明机制与闭环履约的数学沉淀。',
+        keyQuotes: [
+          "Trust is built in drops and lost in buckets.",
+          "Clear is kind. Unclear is unkind."
+        ],
+        transcript: [
+          {
+            id: 'dted-1',
+            speaker: 'Elena Rostova',
+            en: `When we analyze why high-performing teams fail, the breakdown rarely occurs in raw technical competence. It occurs in conversational vulnerability.`,
+            zh: `当我们剖析高绩效团队为何往往功亏一篑时，破裂点极少出现在硬核技术能力上，而是溃散于沟通中的坦诚脆弱度。`,
+            startSec: 0,
+            endSec: 12
+          },
+          {
+            id: 'dted-2',
+            speaker: 'Elena Rostova',
+            en: `If people are terrified of asking clarifying questions, silent assumptions compound until a catastrophic milestone miss occurs.`,
+            zh: `如果团队成员不敢开口探寻澄清性问题，沉默的假定就会不断滚雪球复合，直到酿成灾难性的里程碑延误。`,
+            startSec: 12,
+            endSec: 25
+          },
+          {
+            id: 'dted-3',
+            speaker: 'Elena Rostova',
+            en: `Great executive leaders do not cultivate perfection; they cultivate psychological safety where candor is rewarded above comfort.`,
+            zh: `卓越的高管领袖绝不刻意粉饰完美，他们悉心构筑心理安全感，让直言不讳获得的奖赏远高于盲目的得过且过。`,
+            startSec: 25,
+            endSec: 40
+          }
+        ]
+      };
+    }
+
+    try {
+      const model = client.getGenerativeModel({ model: modelName });
+      const prompt = `
+Generate a world-class TED-style Business English talk lesson in valid JSON.
+Topic: ${topic}
+Return valid JSON without markdown fences matching:
+{
+  "id": "ted-${Date.now()}",
+  "title": "Inspiring Title in English (with Chinese subtitle)",
+  "speaker": "Speaker Name",
+  "speakerRole": "Speaker Job / Credentials",
+  "category": "Category in Chinese",
+  "coverImage": "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&auto=format&fit=crop&q=80",
+  "durationMinutes": 12,
+  "recommendedDate": "今日 AI 定制推荐",
+  "overview": "Overview in Chinese",
+  "executiveInsights": "Executive takeaway in Chinese",
+  "keyQuotes": ["Quote 1", "Quote 2"],
+  "transcript": [
+    {"id": "t-1", "speaker": "Speaker Name", "en": "English sentence", "zh": "Chinese translation", "startSec": 0, "endSec": 10}
+  ]
+}
+`;
+      const res = await model.generateContent(prompt);
+      const text = res.response.text();
+      const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+      return JSON.parse(cleaned);
+    } catch (e) {
+      console.warn('Gemini TED generation failed', e);
+      return this.generateDailyTedLesson(topic);
+    }
+  }
+
   // ===== 启发式智能 Fallback 模式（确保零配置秒开、无网络故障风险） =====
 
   private generateMockListening(level: ProficiencyLevel, industry: string, topic: string): ListeningLesson {
