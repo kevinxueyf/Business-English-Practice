@@ -89,18 +89,17 @@ npm run build
 ### 步骤 2：推送到 GitHub
 在当前项目根目录下执行：
 ```bash
-git init
-git add .
-git commit -m "feat: complete BizPulse AI business english training app"
+git remote add origin https://github.com/kevinxueyf/Business-English-Practice.git
 git branch -M main
-git remote add origin https://github.com/<你的用户名>/<你的仓库名>.git
 git push -u origin main
 ```
 
 ### 步骤 3：开启 GitHub Pages 免费在线访问
-1. 进入 GitHub 仓库页面，点击 **Settings** -> **Pages**。
-2. 在 **Build and deployment** -> **Source** 中选择 **GitHub Actions**。
-3. 项目已内置了 `.github/workflows/deploy.yml`，每次推送代码后，GitHub 会自动完成构建并生成专属公开网址（例如：`https://<你的用户名>.github.io/<你的仓库名>/`），在手机或电脑浏览器中直接打开即可使用！
+1. 进入 GitHub 仓库页面：`https://github.com/kevinxueyf/Business-English-Practice`
+2. 点击 **Settings** -> **Pages**。
+3. 在 **Build and deployment** -> **Source** 中选择 **GitHub Actions**。
+4. 项目已内置了 `.github/workflows/deploy.yml`，每次推送代码后，GitHub 会自动完成构建并生成专属公开网址：
+   👉 **`https://kevinxueyf.github.io/Business-English-Practice/`**，在手机或电脑浏览器中直接打开即可使用！
 
 ---
 
